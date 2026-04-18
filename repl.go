@@ -14,7 +14,19 @@ func startRepl() {
 		scanner.Scan()
 		userInput := scanner.Text()
 		cleanedInput := cleanInput(userInput)
-		fmt.Printf("Your command was: %s\n", cleanedInput[0])
+		if len(cleanedInput) == 0 {
+			continue
+		}
+		command, exists := getCommands()[cleanedInput[0]]
+		if !exists {
+			fmt.Println("Unknown command")
+			continue
+		}
+		err := command.callback()
+		if err != nil {
+			fmt.Println(err)
+		}
+
 	}
 }
 
