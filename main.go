@@ -1,5 +1,7 @@
 package main
 
-func main() string {
-	return "Hello, World!"
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, World!")
 }
