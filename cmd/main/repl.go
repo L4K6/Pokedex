@@ -23,6 +23,7 @@ func startRepl() {
 			fmt.Println("Unknown command")
 			continue
 		}
+		//here i need to put the cache
 		err := command.callback(&conf)
 		if err != nil {
 			fmt.Println(err)
