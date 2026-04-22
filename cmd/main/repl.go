@@ -7,9 +7,8 @@ import (
 	"strings"
 )
 
-func startRepl() {
+func startRepl(cfg *config) {
 	scanner := bufio.NewScanner(os.Stdin)
-	var conf config
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
@@ -23,8 +22,7 @@ func startRepl() {
 			fmt.Println("Unknown command")
 			continue
 		}
-		//here i need to put the cache
-		err := command.callback(&conf)
+		err := command.callback(cfg)
 		if err != nil {
 			fmt.Println(err)
 		}

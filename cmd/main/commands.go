@@ -31,20 +31,32 @@ func commandHelp(c *config) error {
 
 func commandMap(c *config) error {
 	url := c.Next
+	var location locationAreaResp
 	if c.Next == "" {
 		url = "https://pokeapi.co/api/v2/location-area/"
 	}
-	res, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("Error making a request: %w", err)
-	}
-	defer res.Body.Close()
+	if bytes, ok := c.Cache.Get(url); ok {
+		data := bytes
+		if err := json.Unmarshal(data, &location); err != nil {
+			return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		}
+	} else {
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("Error making a request: %w", err)
+		}
+		defer res.Body.Close()
 
-	data, err := io.ReadAll(res.Body)
-	var location locationAreaResp
-	if err = json.Unmarshal(data, &location); err != nil {
-		return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("Error reading out the data: %w", err)
+		}
+		if err = json.Unmarshal(data, &location); err != nil {
+			return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		}
+		c.Cache.Add(url, data)
 	}
+
 	c.Previous = location.Previous
 	c.Next = location.Next
 	for _, name := range location.Results {
@@ -55,21 +67,33 @@ func commandMap(c *config) error {
 
 func commandBmap(c *config) error {
 	url := c.Previous
+	var location locationAreaResp
 	if c.Previous == "" {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	res, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("Error making a request: %w", err)
-	}
-	defer res.Body.Close()
+	if bytes, ok := c.Cache.Get(url); ok {
+		data := bytes
+		if err := json.Unmarshal(data, &location); err != nil {
+			return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		}
+	} else {
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("Error making a request: %w", err)
+		}
+		defer res.Body.Close()
 
-	data, err := io.ReadAll(res.Body)
-	var location locationAreaResp
-	if err = json.Unmarshal(data, &location); err != nil {
-		return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("Error reading out the data: %w", err)
+		}
+		if err = json.Unmarshal(data, &location); err != nil {
+			return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		}
+		c.Cache.Add(url, data)
 	}
+
 	c.Previous = location.Previous
 	c.Next = location.Next
 	for _, name := range location.Results {
