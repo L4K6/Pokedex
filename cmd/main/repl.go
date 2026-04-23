@@ -22,11 +22,17 @@ func startRepl(cfg *config) {
 			fmt.Println("Unknown command")
 			continue
 		}
-		err := command.callback(cfg)
-		if err != nil {
-			fmt.Println(err)
+		if command.name == "explore" && len(cleanedInput) >= 2 {
+			err := command.callback(cfg, cleanedInput[1])
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			err := command.callback(cfg, "")
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
-
 	}
 }
 

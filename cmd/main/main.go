@@ -8,7 +8,7 @@ import (
 
 func main() {
 	cfg := &config{
-		Cache: pokecache.NewCache(5 * time.Second),
+		Cache: pokecache.NewCache(50 * time.Second),
 	}
 	startRepl(cfg)
 }

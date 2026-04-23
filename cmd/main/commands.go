@@ -11,16 +11,16 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config) error
+	callback    func(c *config, inputstr string) error
 }
 
-func commandExit(c *config) error {
+func commandExit(c *config, inputstr string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(c *config) error {
+func commandHelp(c *config, inputstr string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	for _, c := range getCommands() {
@@ -29,7 +29,7 @@ func commandHelp(c *config) error {
 	return nil
 }
 
-func commandMap(c *config) error {
+func commandMap(c *config, inputstr string) error {
 	url := c.Next
 	var location locationAreaResp
 	if c.Next == "" {
@@ -65,7 +65,7 @@ func commandMap(c *config) error {
 	return nil
 }
 
-func commandBmap(c *config) error {
+func commandBmap(c *config, inputstr string) error {
 	url := c.Previous
 	var location locationAreaResp
 	if c.Previous == "" {
@@ -102,6 +102,41 @@ func commandBmap(c *config) error {
 	return nil
 }
 
+func commandExplore(c *config, location string) error {
+	if len(location) == 0 {
+		return fmt.Errorf("no location provided/wrong location input")
+	}
+	url := "https://pokeapi.co/api/v2/location-area/" + location
+	fmt.Println("Exploring " + location + "...")
+	fmt.Println("Found Pokemon:")
+	var pokemon LocationAreaStruct
+	if bytes, ok := c.Cache.Get(url); ok {
+		data := bytes
+		if err := json.Unmarshal(data, &pokemon); err != nil {
+			return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		}
+	} else {
+		res, err := http.Get(url)
+		if err != nil {
+			return fmt.Errorf("Error making a request: %w", err)
+		}
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("Error reading out the data: %w", err)
+		}
+		if err = json.Unmarshal(data, &pokemon); err != nil {
+			return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+		}
+		c.Cache.Add(url, data)
+	}
+	for _, name := range pokemon.PokemonEncounters {
+		fmt.Println(" - " + name.Pokemon.Name)
+	}
+	return nil
+}
+
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"exit": {
@@ -123,6 +158,11 @@ func getCommands() map[string]cliCommand {
 			name:        "bmap",
 			description: "Displays 20 previous locations",
 			callback:    commandBmap,
+		},
+		"explore": {
+			name:        "explore",
+			description: "Explores location and shows the pokemon that can be found there",
+			callback:    commandExplore,
 		},
 	}
 }
