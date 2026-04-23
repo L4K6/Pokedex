@@ -197,6 +197,14 @@ func commandInspect(c *config, name string) error {
 	}
 }
 
+func commandPokedex(c *config, name string) error {
+	fmt.Println("Your Pokedex:")
+	for _, pok := range c.CaughtPokemon {
+		fmt.Printf(" - %s\n", pok.Name)
+	}
+	return nil
+}
+
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"exit": {
@@ -233,6 +241,11 @@ func getCommands() map[string]cliCommand {
 			name:        "inspect",
 			description: "Inspects a pokemon if it is within the pokedex",
 			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Shows pokemon caught in the pokedex",
+			callback:    commandPokedex,
 		},
 	}
 }
