@@ -26,11 +26,20 @@ func startRepl(cfg *config) {
 			err := command.callback(cfg, cleanedInput[1])
 			if err != nil {
 				fmt.Println(err)
+				continue
+			}
+		}
+		if command.name == "catch" && len(cleanedInput) >= 2 {
+			err := command.callback(cfg, cleanedInput[1])
+			if err != nil {
+				fmt.Println(err)
+				continue
 			}
 		} else {
 			err := command.callback(cfg, "")
 			if err != nil {
 				fmt.Println(err)
+				continue
 			}
 		}
 	}

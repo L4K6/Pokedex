@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 )
@@ -103,12 +104,7 @@ func commandBmap(c *config, inputstr string) error {
 }
 
 func commandExplore(c *config, location string) error {
-	if len(location) == 0 {
-		return fmt.Errorf("no location provided/wrong location input")
-	}
 	url := "https://pokeapi.co/api/v2/location-area/" + location
-	fmt.Println("Exploring " + location + "...")
-	fmt.Println("Found Pokemon:")
 	var pokemon LocationAreaStruct
 	if bytes, ok := c.Cache.Get(url); ok {
 		data := bytes
@@ -122,6 +118,10 @@ func commandExplore(c *config, location string) error {
 		}
 		defer res.Body.Close()
 
+		if res.StatusCode > 299 {
+			return fmt.Errorf("Unknown Location")
+		}
+
 		data, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("Error reading out the data: %w", err)
@@ -131,8 +131,40 @@ func commandExplore(c *config, location string) error {
 		}
 		c.Cache.Add(url, data)
 	}
+	fmt.Println("Exploring " + location + "...")
+	fmt.Println("Found Pokemon:")
 	for _, name := range pokemon.PokemonEncounters {
 		fmt.Println(" - " + name.Pokemon.Name)
+	}
+	return nil
+}
+
+func commandCatch(c *config, name string) error {
+	fmt.Println("Throwing a Pokeball at " + name + "...")
+	url := "https://pokeapi.co/api/v2/pokemon/" + name
+	res, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("Error making a request: %w", err)
+	}
+	if res.StatusCode > 299 {
+		return fmt.Errorf("Unknown Pokemon")
+	}
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("Error reading out the data: %w", err)
+	}
+	var catch Pokemon
+	if err = json.Unmarshal(data, &catch); err != nil {
+		return fmt.Errorf("Error Unmarshalling the response body: %w", err)
+	}
+	randonNumber := rand.Intn(catch.BaseExperience)
+	fmt.Println(randonNumber)
+	if 42 > randonNumber {
+		fmt.Printf("%s was caught!\n", name)
+		c.CaughtPokemon[name] = catch
+	} else {
+		fmt.Printf("%s esceaped!\n", name)
 	}
 	return nil
 }
@@ -163,6 +195,11 @@ func getCommands() map[string]cliCommand {
 			name:        "explore",
 			description: "Explores location and shows the pokemon that can be found there",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Tries to catch a pokemon",
+			callback:    commandCatch,
 		},
 	}
 }
