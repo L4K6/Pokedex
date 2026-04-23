@@ -22,25 +22,18 @@ func startRepl(cfg *config) {
 			fmt.Println("Unknown command")
 			continue
 		}
-		if command.name == "explore" && len(cleanedInput) >= 2 {
-			err := command.callback(cfg, cleanedInput[1])
-			if err != nil {
-				fmt.Println(err)
-				continue
+		var stringInp string
+		if command.name == "explore" || command.name == "catch" || command.name == "inspect" {
+			if len(cleanedInput) < 2 {
+				stringInp = ""
+			} else {
+				stringInp = cleanedInput[1]
 			}
 		}
-		if command.name == "catch" && len(cleanedInput) >= 2 {
-			err := command.callback(cfg, cleanedInput[1])
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-		} else {
-			err := command.callback(cfg, "")
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
+		err := command.callback(cfg, stringInp)
+		if err != nil {
+			fmt.Println(err)
+			continue
 		}
 	}
 }

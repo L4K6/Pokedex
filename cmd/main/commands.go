@@ -106,6 +106,9 @@ func commandBmap(c *config, inputstr string) error {
 func commandExplore(c *config, location string) error {
 	url := "https://pokeapi.co/api/v2/location-area/" + location
 	var pokemon LocationAreaStruct
+	if len(location) == 0 {
+		return fmt.Errorf("No location input")
+	}
 	if bytes, ok := c.Cache.Get(url); ok {
 		data := bytes
 		if err := json.Unmarshal(data, &pokemon); err != nil {
@@ -142,6 +145,9 @@ func commandExplore(c *config, location string) error {
 func commandCatch(c *config, name string) error {
 	fmt.Println("Throwing a Pokeball at " + name + "...")
 	url := "https://pokeapi.co/api/v2/pokemon/" + name
+	if len(name) == 0 {
+		return fmt.Errorf("No Pokemon input")
+	}
 	res, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("Error making a request: %w", err)
@@ -167,6 +173,28 @@ func commandCatch(c *config, name string) error {
 		fmt.Printf("%s esceaped!\n", name)
 	}
 	return nil
+}
+
+func commandInspect(c *config, name string) error {
+	if len(name) == 0 {
+		return fmt.Errorf("no pokemon name")
+	}
+	if pokemon, ok := c.CaughtPokemon[name]; !ok {
+		return fmt.Errorf("Unknown Pokemon name")
+	} else {
+		fmt.Println("Name: " + pokemon.Name)
+		fmt.Printf("Height: %d\n", pokemon.Height)
+		fmt.Printf("Weight: %d\n", pokemon.Weight)
+		fmt.Println("Stats:")
+		for _, stat := range pokemon.Stats {
+			fmt.Printf("-%s: %v\n", stat.Stat.Name, stat.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, typeInfo := range pokemon.Types {
+			fmt.Printf(" -%s\n", typeInfo.Type.Name)
+		}
+		return nil
+	}
 }
 
 func getCommands() map[string]cliCommand {
@@ -200,6 +228,11 @@ func getCommands() map[string]cliCommand {
 			name:        "catch",
 			description: "Tries to catch a pokemon",
 			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspects a pokemon if it is within the pokedex",
+			callback:    commandInspect,
 		},
 	}
 }
